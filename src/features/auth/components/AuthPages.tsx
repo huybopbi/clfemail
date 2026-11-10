@@ -37,7 +37,7 @@ export function Brand() {
   return (
     <span className="brand">
       <span className="brand-mark" aria-hidden="true"><OmniLogo size={18} /></span>
-      <span>OmniMail</span>
+      <span>MAILFAST</span>
     </span>
   )
 }
@@ -84,7 +84,7 @@ export function PageLoader() {
       <div className="opening-splash" aria-hidden="true">
         <span className="opening-splash__mark"><OmniLogo size={35} /></span>
         <span className="opening-splash__copy">
-          <strong>OmniMail</strong>
+          <strong>MAILFAST</strong>
           <small>YOUR DOMAINS · ONE INBOX</small>
         </span>
         <span className="opening-splash__track"><span /></span>
