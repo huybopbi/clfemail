@@ -98,7 +98,7 @@ export interface AdminMessageFilters {
 
 export type AdminMessageAction = 'trash' | 'restore' | 'delete'
 
-export type TranslationTargetLanguage = 'en' | 'zh'
+export type TranslationTargetLanguage = 'en' | 'zh' | 'vi'
 
 export interface MessageTranslation {
   sourceLanguage: string

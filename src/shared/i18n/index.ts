@@ -1,7 +1,7 @@
 import { useSyncExternalStore } from 'react'
 import { enCore } from './messages/en/core'
 
-export type Locale = 'zh-CN' | 'en-US'
+export type Locale = 'zh-CN' | 'en-US' | 'vi-VN'
 export type TranslationValues = Record<string, string | number>
 
 const STORAGE_KEY = 'omnimail-locale'
@@ -11,14 +11,13 @@ export function detectLocale(
   stored?: string | null,
   languages: readonly string[] = [],
 ): Locale {
-  if (stored === 'zh-CN' || stored === 'en-US') return stored
-  return languages.some((language) => language.toLowerCase().startsWith('zh'))
-    ? 'zh-CN'
-    : 'en-US'
+  if (stored === 'zh-CN' || stored === 'en-US' || stored === 'vi-VN') return stored
+  void languages
+  return 'vi-VN'
 }
 
 function initialLocale(): Locale {
-  if (typeof window === 'undefined') return 'zh-CN'
+  if (typeof window === 'undefined') return 'vi-VN'
   let stored: string | null = null
   try {
     stored = window.localStorage.getItem(STORAGE_KEY)
@@ -35,6 +34,9 @@ const english = {
 let requestedLocale = currentLocale
 let englishLoaded = false
 let englishLoad: Promise<void> | null = null
+const vietnamese: Record<string, string> = {}
+let vietnameseLoaded = false
+let vietnameseLoad: Promise<void> | null = null
 const englishPlurals: Record<string, [string, string]> = {
   '{count} 个邮箱地址': ['{count} mailbox', '{count} mailboxes'],
   '{count} 个启用地址': ['{count} enabled address', '{count} enabled addresses'],
@@ -74,8 +76,31 @@ export function ensureEnglishTranslations(): Promise<void> {
   return englishLoad
 }
 
+export function ensureVietnameseTranslations(): Promise<void> {
+  if (vietnameseLoaded) return Promise.resolve()
+  if (!vietnameseLoad) {
+    vietnameseLoad = import('./messages/vi')
+      .then(({ vietnameseTranslations }) => {
+        Object.assign(vietnamese, vietnameseTranslations)
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        vietnameseLoaded = true
+        listeners.forEach((listener) => listener())
+      })
+  }
+  return vietnameseLoad
+}
+
+export function hasVietnameseTranslation(source: string): boolean {
+  if (!/[\u3400-\u9fff]/.test(source)) return true
+  return Object.hasOwn(vietnamese, source)
+}
+
 export function translationsReady(): boolean {
-  return currentLocale === 'zh-CN' || englishLoaded
+  if (currentLocale === 'zh-CN') return true
+  if (currentLocale === 'en-US') return englishLoaded
+  return vietnameseLoaded
 }
 
 function syncDocument(locale: Locale): void {
@@ -84,8 +109,10 @@ function syncDocument(locale: Locale): void {
   const description = document.querySelector<HTMLMetaElement>('meta[name="description"]')
   if (description) {
     description.content = locale === 'zh-CN'
-      ? 'OmniMail — 简洁、私有的 Cloudflare 域名邮箱。'
-      : 'OmniMail — a focused, private domain mailbox on Cloudflare.'
+      ? 'MailFast — 简洁、私有的 Cloudflare 域名邮箱。'
+      : locale === 'vi-VN'
+        ? 'MailFast — hộp thư tên miền riêng trên Cloudflare.'
+        : 'MailFast — a focused, private domain mailbox on Cloudflare.'
   }
 }
 
@@ -106,6 +133,12 @@ export function setLocale(locale: Locale): void {
   if (locale === 'en-US' && !englishLoaded) {
     void ensureEnglishTranslations().then(() => {
       if (requestedLocale === 'en-US') setLocale('en-US')
+    })
+    return
+  }
+  if (locale === 'vi-VN' && !vietnameseLoaded) {
+    void ensureVietnameseTranslations().then(() => {
+      if (requestedLocale === 'vi-VN') setLocale('vi-VN')
     })
     return
   }
@@ -150,7 +183,14 @@ export function translate(
       return `${mailboxCount[1]} mailbox address${mailboxCount[1] === '1' ? '' : 'es'} ha${mailboxCount[1] === '1' ? 's' : 've'} been created.`
     }
   }
-  const template = locale === 'en-US' ? english[source] || source : source
+  if (locale === 'vi-VN') {
+    const domainCount = source.match(/^OmniMail 中已管理 (\d+) 个收件域名。$/)
+    if (domainCount) return `OmniMail đang quản lý ${domainCount[1]} tên miền nhận thư.`
+    const mailboxCount = source.match(/^当前已创建 (\d+) 个邮箱地址。$/)
+    if (mailboxCount) return `Đã tạo ${mailboxCount[1]} địa chỉ hộp thư.`
+  }
+  const catalog = locale === 'en-US' ? english : locale === 'vi-VN' ? vietnamese : null
+  const template = catalog ? catalog[source] || source : source
   return template.replace(/\{(\w+)\}/g, (match, key: string) => (
     Object.hasOwn(values, key) ? String(values[key]) : match
   ))
@@ -159,3 +199,4 @@ export function translate(
 export const t = translate
 
 if (currentLocale === 'en-US') void ensureEnglishTranslations()
+if (currentLocale === 'vi-VN') void ensureVietnameseTranslations()

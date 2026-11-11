@@ -1,14 +1,21 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { beforeAll, describe, expect, it } from 'vitest'
+import { enCore } from './messages/en/core'
+import { englishTranslations } from './messages/en'
+import { vietnameseTranslations } from './messages/vi'
 import {
   detectLocale,
   ensureEnglishTranslations,
+  ensureVietnameseTranslations,
   hasEnglishTranslation,
   translate,
 } from './index'
 
-beforeAll(() => ensureEnglishTranslations())
+beforeAll(() => Promise.all([
+  ensureEnglishTranslations(),
+  ensureVietnameseTranslations(),
+]))
 
 function sourceFiles(directory: string): string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -33,12 +40,10 @@ describe('locale detection', () => {
     expect(detectLocale('en-US', ['zh-CN'])).toBe('en-US')
   })
 
-  it('uses Chinese for Chinese browser languages', () => {
-    expect(detectLocale(null, ['zh-Hans-CN', 'en-US'])).toBe('zh-CN')
-  })
-
-  it('uses English for other browser languages', () => {
-    expect(detectLocale(null, ['fr-FR'])).toBe('en-US')
+  it('uses Vietnamese when no language has been saved', () => {
+    expect(detectLocale(null, ['zh-Hans-CN', 'en-US'])).toBe('vi-VN')
+    expect(detectLocale(null, ['fr-FR'])).toBe('vi-VN')
+    expect(detectLocale(null, ['vi-VN'])).toBe('vi-VN')
   })
 })
 
@@ -56,6 +61,26 @@ describe('translation', () => {
 
   it('keeps unknown strings as a safe fallback', () => {
     expect(translate('OmniMail', {}, 'en-US')).toBe('OmniMail')
+  })
+
+  it('translates the mailbox into Vietnamese', () => {
+    expect(translate('收件箱', {}, 'vi-VN')).toBe('Hộp thư đến')
+    expect(translate('登录', {}, 'vi-VN')).toBe('Đăng nhập')
+    expect(translate('新建邮件', {}, 'vi-VN')).toBe('Soạn thư mới')
+    expect(translate('系统设置', {}, 'vi-VN')).toBe('Cài đặt hệ thống')
+  })
+
+  it('covers every English catalog key in Vietnamese', () => {
+    const english = { ...enCore, ...englishTranslations }
+    const missing = Object.keys(english).filter((key) => !Object.hasOwn(vietnameseTranslations, key))
+    const tokens = (value = '') => (value.match(/\{[a-zA-Z0-9_]+\}/g) ?? []).slice().sort()
+    const brokenPlaceholders = Object.keys(english).flatMap((key) => {
+      const expected = tokens(english[key]).join(' ')
+      const actual = tokens(vietnameseTranslations[key]).join(' ')
+      return expected === actual ? [] : [`${key}: ${expected} -> ${actual}`]
+    })
+    expect(missing).toEqual([])
+    expect(brokenPlaceholders).toEqual([])
   })
 
   it('has an English translation for every direct Chinese UI string', () => {

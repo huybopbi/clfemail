@@ -54,7 +54,7 @@ const oversized = files
   .map((filename) => {
     const path = relative(root, filename).replaceAll('\\', '/')
     const frontendImplementation = /^(src|extension\/src)\/.*\.tsx?$/.test(path)
-      && !/^src\/shared\/i18n\/messages\/en\/[^/]+\.ts$/.test(path)
+      && !/^src\/shared\/i18n\/messages\/[^/]+\/[^/]+\.ts$/.test(path)
     return {
       filename,
       lines: lineCount(filename),

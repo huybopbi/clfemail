@@ -10,7 +10,7 @@ import {
   type ApiGroupId,
   type LocalizedText,
 } from '../model/apiCatalog'
-import { t, useLocale } from '../../../shared/i18n'
+import { t, useLocale, type Locale } from '../../../shared/i18n'
 import { ApiCodeBlock, type ApiCopyState } from './ApiCodeBlock'
 
 const authLabels: Record<ApiAuth, string> = {
@@ -23,8 +23,8 @@ const authLabels: Record<ApiAuth, string> = {
   webhook: 'Webhook 签名',
 }
 
-function localizedText(value: LocalizedText, locale: 'zh-CN' | 'en-US'): string {
-  return locale === 'en-US' ? value.en : value.zh
+function localizedText(value: LocalizedText, locale: Locale): string {
+  return locale === 'zh-CN' ? value.zh : value.en
 }
 
 export function ApiEndpointCatalog({

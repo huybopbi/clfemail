@@ -85,7 +85,7 @@ export function PageLoader() {
         <span className="opening-splash__mark"><OmniLogo size={35} /></span>
         <span className="opening-splash__copy">
           <strong>MAILFAST</strong>
-          <small>YOUR DOMAINS · ONE INBOX</small>
+          <small>{t('你的域名 · 一个收件箱')}</small>
         </span>
         <span className="opening-splash__track"><span /></span>
       </div>
@@ -165,7 +165,7 @@ export function SetupPage({
       </div>
       <section className="auth-card setup-card">
         <span className="auth-symbol"><ShieldCheck size={27} /></span>
-        <p className="eyebrow">FIRST RUN</p>
+        <p className="eyebrow">{t('首次运行')}</p>
         <h1>{t('设置你的邮箱')}</h1>
         <p className="auth-lead">
           {t('为 Worker 中配置的主管理员创建密码。登录身份与域名收件地址相互独立。')}
@@ -305,7 +305,7 @@ export function PublicLanding({
       <main className="public-main">
         <section className="public-hero">
           <div className="public-hero__copy">
-            <p className="eyebrow">YOUR DOMAINS · ONE INBOX</p>
+            <p className="eyebrow">{t('你的域名 · 一个收件箱')}</p>
             <h1>{t('把多个域名，收进一个清爽邮箱。')}</h1>
             <p>{t('基于 Cloudflare Workers、Static Assets、D1 与 R2 的轻量邮件工作台。集中管理域名、邮箱地址和访问权限。')}</p>
             <div className="public-hero__actions">
@@ -328,7 +328,7 @@ export function PublicLanding({
           </div>
 
           <div className="public-mail-preview" aria-hidden="true">
-            <header><Brand /><span>ALL MAILBOXES</span></header>
+            <header><Brand /><span>{t('全部邮箱')}</span></header>
             <div className="public-mail-preview__body">
               <aside><span /><span /><span /><span /></aside>
               <div>

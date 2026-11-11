@@ -10,7 +10,7 @@ const TRANSLATION_REQUESTS_PER_MINUTE = 10
 const TRANSLATION_CONCURRENCY = 4
 const ignoredHtmlElements = new Set(['head', 'script', 'style', 'noscript', 'template'])
 
-const targetLanguages = new Set(['en', 'zh'])
+const targetLanguages = new Set(['en', 'zh', 'vi'])
 const modelLanguages = new Set([
   'af', 'am', 'ar', 'ast', 'az', 'ba', 'be', 'bg', 'bn', 'br', 'bs', 'ca', 'ceb',
   'cs', 'cy', 'da', 'de', 'el', 'en', 'es', 'et', 'fa', 'ff', 'fi', 'fr', 'fy',

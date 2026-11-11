@@ -9,7 +9,9 @@ import { errorMessage } from '../../../shared/api/errorMessage'
 import { t, useLocale, type Locale } from '../../../shared/i18n'
 
 export function translationTarget(locale: Locale): TranslationTargetLanguage {
-  return locale === 'zh-CN' ? 'zh' : 'en'
+  if (locale === 'zh-CN') return 'zh'
+  if (locale === 'vi-VN') return 'vi'
+  return 'en'
 }
 
 function languageName(code: string, locale: Locale): string {
@@ -84,7 +86,11 @@ export function MessageTranslation({
     }
   }
 
-  const targetName = targetLanguage === 'zh' ? t('简体中文') : t('English')
+  const targetName = targetLanguage === 'zh'
+    ? t('简体中文')
+    : targetLanguage === 'vi'
+      ? 'Tiếng Việt'
+      : t('English')
   return (
     <section className="message-translation">
       <div className="message-translation__controls">

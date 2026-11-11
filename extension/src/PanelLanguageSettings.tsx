@@ -5,8 +5,9 @@ export function PanelLanguageSettings() {
   useLocale()
   const locale = getLocale()
   const options: Array<{ value: Locale; label: string }> = [
-    { value: 'zh-CN', label: '简体中文' },
+    { value: 'vi-VN', label: 'Tiếng Việt' },
     { value: 'en-US', label: 'English' },
+    { value: 'zh-CN', label: '简体中文' },
   ]
   return <section className="page-card panel-language-setting"
     aria-labelledby="panel-language-title">

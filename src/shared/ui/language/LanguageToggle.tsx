@@ -5,8 +5,9 @@ export function LanguageToggle({ labeled = false }: { labeled?: boolean }) {
   useLocale()
   const locale = getLocale()
   const choices: Array<{ value: Locale; label: string; compact: string }> = [
-    { value: 'zh-CN', label: '简体中文', compact: '中' },
+    { value: 'vi-VN', label: 'Tiếng Việt', compact: 'VI' },
     { value: 'en-US', label: 'English', compact: 'EN' },
+    { value: 'zh-CN', label: '简体中文', compact: '中' },
   ]
 
   return (
@@ -35,8 +36,10 @@ export function LanguageToggle({ labeled = false }: { labeled?: boolean }) {
 
 export function LanguageQuickToggle() {
   const locale = useLocale()
-  const nextLocale: Locale = locale === 'zh-CN' ? 'en-US' : 'zh-CN'
-  const nextLabel = nextLocale === 'zh-CN' ? '简体中文' : 'English'
+  const order: Locale[] = ['vi-VN', 'en-US', 'zh-CN']
+  const nextLocale = order[(order.indexOf(locale) + 1) % order.length]
+  const nextLabel = nextLocale === 'zh-CN' ? '简体中文' : nextLocale === 'en-US' ? 'English' : 'Tiếng Việt'
+  const compact = nextLocale === 'zh-CN' ? '中' : nextLocale === 'en-US' ? 'EN' : 'VI'
 
   return (
     <button
@@ -47,7 +50,7 @@ export function LanguageQuickToggle() {
       onClick={() => setLocale(nextLocale)}
     >
       <Languages size={14} aria-hidden="true" />
-      <span>{nextLocale === 'zh-CN' ? '中' : 'EN'}</span>
+      <span>{compact}</span>
     </button>
   )
 }
