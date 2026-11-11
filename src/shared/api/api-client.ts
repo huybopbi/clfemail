@@ -73,6 +73,19 @@ export const AUTH_REQUIRED_EVENT = 'omnimail:auth-required'
 
 type RequestOptions = RequestInit & { timeoutMs?: number }
 
+function combineSignals(signals: AbortSignal[]): AbortSignal {
+  if (typeof AbortSignal.any === 'function') return AbortSignal.any(signals)
+  const controller = new AbortController()
+  for (const signal of signals) {
+    if (signal.aborted) {
+      controller.abort(signal.reason)
+      return controller.signal
+    }
+    signal.addEventListener('abort', () => controller.abort(signal.reason), { once: true })
+  }
+  return controller.signal
+}
+
 export async function request<T>(path: string, init: RequestOptions = {}): Promise<T> {
   const paused = serviceBackoff()
   if (paused) throw new ApiError(serviceBackoffMessage(paused), 503, paused)
@@ -88,7 +101,7 @@ export async function request<T>(path: string, init: RequestOptions = {}): Promi
       ...requestInit,
       headers,
       credentials: 'include',
-      signal: requestInit.signal ? AbortSignal.any([requestInit.signal, timeout]) : timeout,
+      signal: requestInit.signal ? combineSignals([requestInit.signal, timeout]) : timeout,
     })
   } catch (error) {
     if (error instanceof DOMException && ['AbortError', 'TimeoutError'].includes(error.name)) {
