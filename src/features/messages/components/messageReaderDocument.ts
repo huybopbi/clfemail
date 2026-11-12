@@ -1,5 +1,9 @@
 import { api } from '../../../shared/api'
-import { forceLightEmailDocument, normalizeRemoteImageSource } from '../../../shared/mail/emailContent'
+import {
+  applyRemoteImageBackgrounds,
+  forceLightEmailDocument,
+  normalizeRemoteImageSource,
+} from '../../../shared/mail/emailContent'
 
 export function emailImageSources(
   remoteImagesEnabled: boolean,
@@ -76,6 +80,9 @@ export function buildEmailDocument(
     }
   })
   document.querySelectorAll('source[srcset]').forEach((source) => source.removeAttribute('srcset'))
+  if (remoteImagesEnabled) {
+    applyRemoteImageBackgrounds(document, (source) => api.remoteImageUrl(source))
+  }
   document.querySelectorAll('a[href]').forEach((link) => {
     const href = safeEmailHref(link.getAttribute('href') ?? '')
     if (!href) {
