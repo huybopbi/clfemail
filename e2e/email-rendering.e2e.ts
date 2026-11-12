@@ -286,3 +286,83 @@ test('translates a message and switches back to the original', async ({ page }) 
   await expect(stack).toHaveAttribute('data-brightness-gap-seen', 'false')
   await expect(reader).toHaveAttribute('data-translation-preparing-seen', 'false')
 })
+
+test('product backgrounds in marketing mail load through the image proxy', async ({ page }) => {
+  const proxied: string[] = []
+  await page.addInitScript(() => {
+    localStorage.setItem('omnimail.deployment-guide.v1', 'seen')
+    localStorage.setItem('omnimail-locale', 'zh-CN')
+  })
+  await page.route('**://*/api/**', async (route) => {
+    const path = new URL(route.request().url()).pathname
+    if (path === '/api/config') return json(route, {
+      appName: 'OmniMail', setupComplete: true, replyEnabled: false,
+      registrationEnabled: false, registrationAvailable: false,
+      registrationMethod: 'password', linuxDoLoginEnabled: false,
+      registrationDomainPolicy: { mode: 'blocklist', domains: [] },
+      registrationProtectionReady: false, turnstileSiteKey: '',
+      mailRefreshInterval: 30, remoteImagesEnabled: true,
+      unassignedMailEnabled: false, superAdminEmail: user.email,
+      setupRequirements: {
+        databaseReady: true, storageReady: true, queueReady: true,
+        superAdminReady: true, setupTokenReady: false,
+      },
+    })
+    if (path === '/api/session') return json(route, { user })
+    if (path === '/api/mailboxes') return json(route, { mailboxes: [{
+      address: 'inbox@example.com', domain: 'example.com',
+      isPrimary: true, isActive: true,
+    }] })
+    if (path === '/api/domains') return json(route, { domains: [] })
+    if (path === '/api/drafts') return json(route, { drafts: [], limit: 5 })
+    if (path === '/api/messages/message-1') return json(route, {
+      message: {
+        ...message, messageId: null, inReplyTo: null, references: null,
+        cc: [], text: 'Product is waiting',
+        html: `
+          <style>.banner { background: url('https://ae01.alicdn.com/kf/banner.jpg') center/cover; height: 80px; }</style>
+          <div class="banner">Banner</div>
+          <table><tr><td class="hero" background="http://ae01.alicdn.com/kf/hero.jpg" height="120"
+            style="background-image:url(http://ae01.alicdn.com/kf/hero.jpg);height:120px;">
+            Product is waiting
+          </td></tr></table>`,
+        attachments: [],
+      },
+      thread: [message],
+    })
+    if (path === '/api/messages') return json(route, {
+      unchanged: false, version: 1, messages: [message],
+      counts: { unread: 0, starred: 0, sent: 0, trash: 0 },
+      page: { hasMore: false, nextCursor: null, limit: 30 },
+    })
+    if (path === '/api/remote-images') {
+      proxied.push(new URL(route.request().url()).searchParams.get('url') ?? '')
+      return route.fulfill({
+        contentType: 'image/gif',
+        body: Buffer.from('R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=', 'base64'),
+      })
+    }
+    return route.fulfill({ status: 500, body: `Unhandled route: ${path}` })
+  })
+
+  await page.goto('/')
+  await page.getByText('Welcome to OmniMail').click()
+  const frame = page.frameLocator('iframe.email-frame.is-active')
+  await expect(frame.getByText('Product is waiting')).toBeVisible()
+  await expect.poll(() => [...new Set(proxied)].sort()).toEqual([
+    'https://ae01.alicdn.com/kf/banner.jpg',
+    'https://ae01.alicdn.com/kf/hero.jpg',
+  ])
+  await expect(frame.locator('.hero')).toHaveAttribute(
+    'background',
+    /\/api\/remote-images\?url=https%3A%2F%2Fae01\.alicdn\.com%2Fkf%2Fhero\.jpg/,
+  )
+  await expect(frame.locator('.hero')).toHaveCSS(
+    'background-image',
+    /\/api\/remote-images\?url=https%3A%2F%2Fae01\.alicdn\.com%2Fkf%2Fhero\.jpg/,
+  )
+  await expect(frame.locator('.banner')).toHaveCSS(
+    'background-image',
+    /\/api\/remote-images\?url=https%3A%2F%2Fae01\.alicdn\.com%2Fkf%2Fbanner\.jpg/,
+  )
+})

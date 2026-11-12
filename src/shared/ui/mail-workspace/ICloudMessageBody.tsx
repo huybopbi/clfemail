@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
 import { api, type ICloudMessage } from '../../api'
 import {
+  applyRemoteImageBackgrounds,
   forceLightEmailDocument,
   loadDeferredRemoteImages,
   normalizeRemoteImageSource,
@@ -48,6 +49,9 @@ export function buildICloudEmailDocument(html: string, remoteImagesEnabled: bool
     if (remoteSource) image.dataset.omnimailSrc = api.remoteImageUrl(remoteSource)
   })
   document.querySelectorAll('source').forEach((source) => source.remove())
+  if (remoteImagesEnabled) {
+    applyRemoteImageBackgrounds(document, (source) => api.remoteImageUrl(source))
+  }
   document.querySelectorAll<HTMLAnchorElement>('a[href]').forEach((link) => {
     const href = safeHttpHref(link.getAttribute('href') || '')
     link.removeAttribute('href')
